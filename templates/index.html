@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>chitchat — Ultra-Fast AI Intelligence</title>
+    <meta name="description" content="chitchat is a modern, ultra-fast AI chatbot powered by Groq and Flask, featuring multimodal understanding, voice input, and seamless history.">
+    <meta name="theme-color" content="#0d1117">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Highlight.js for Code Highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" id="hljs-theme">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/style.css">
+
+    <!-- Markdown & Sanitizer Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.9/purify.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+</head>
+<body>
+    <div class="app-container" id="app">
+        <!-- Overlay for mobile sidebar -->
+        <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+        <!-- ================= SIDEBAR ================= -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="brand-logo">
+                    <div class="brand-icon">
+                        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                            <circle cx="9" cy="12" r="1" fill="currentColor"></circle>
+                            <circle cx="12" cy="12" r="1" fill="currentColor"></circle>
+                            <circle cx="15" cy="12" r="1" fill="currentColor"></circle>
+                        </svg>
+                    </div>
+                    <div class="brand-text">
+                        <span class="brand-name">chitchat</span>
+                        <span class="brand-badge">GROQ AI</span>
+                    </div>
+                </div>
+                <button class="icon-btn mobile-close-btn" id="close-sidebar-btn" title="Close sidebar" aria-label="Close sidebar">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+
+            <!-- New Chat Button -->
+            <div class="sidebar-action-wrap">
+                <button class="new-chat-btn" id="new-chat-btn">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>New Chat</span>
+                    <span class="shortcut-tag">Ctrl+K</span>
+                </button>
+            </div>
+
+            <!-- Search History -->
+            <div class="history-search-wrap">
+                <div class="search-input-box">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="text" id="history-search-input" placeholder="Search conversations..." aria-label="Search conversation history">
+                    <button class="clear-search-btn hidden" id="clear-search-btn" title="Clear search" aria-label="Clear search">×</button>
+                </div>
+            </div>
+
+            <!-- Conversation History List -->
+            <div class="history-list-container" id="history-list">
+                <div class="history-loading">
+                    <div class="spinner-small"></div>
+                    <span>Loading history...</span>
+                </div>
+            </div>
+
+            <!-- Sidebar Footer -->
+            <div class="sidebar-footer">
+                <div class="system-status-indicator" id="status-indicator" title="Groq API Status">
+                    <span class="status-dot"></span>
+                    <span class="status-text" id="status-text">Checking Groq...</span>
+                </div>
+                <div class="footer-btn-row">
+                    <button class="footer-icon-btn" id="theme-toggle-btn" title="Toggle Theme (Dark / Light)" aria-label="Toggle Theme">
+                        <svg class="sun-icon hidden" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                        <svg class="moon-icon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                    </button>
+                    <button class="footer-icon-btn" id="clear-all-history-btn" title="Clear all history" aria-label="Clear all conversations">
+                        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                    <button class="footer-icon-btn" id="open-settings-btn" title="API Settings" aria-label="Open Settings">
+                        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ================= MAIN CHAT AREA ================= -->
+        <main class="chat-main">
+            <!-- Global Alert Banner for Missing API Key -->
+            <div class="api-key-banner hidden" id="api-key-banner">
+                <div class="banner-content">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    <span><strong>Groq API Key Required:</strong> Please configure your free Groq API key to start chatting.</span>
+                </div>
+                <button class="banner-btn" id="banner-settings-btn">Configure Key</button>
+            </div>
+
+            <!-- Chat Top Header -->
+            <header class="chat-header">
+                <div class="header-left">
+                    <button class="icon-btn mobile-menu-btn" id="mobile-menu-btn" title="Open Sidebar" aria-label="Open Sidebar">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                    </button>
+                    <div class="chat-title-wrap">
+                        <h1 class="chat-title" id="current-chat-title" contenteditable="false" spellcheck="false">New Chat</h1>
+                        <button class="icon-btn edit-title-btn" id="edit-title-btn" title="Rename chat" aria-label="Rename conversation">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <!-- Model Selector Pill -->
+                    <div class="model-pill" id="model-pill" title="Active Groq Model">
+                        <span class="model-pill-dot"></span>
+                        <span class="model-pill-name" id="active-model-name">Llama 3.3 70B</span>
+                    </div>
+
+                    <!-- Export Menu Dropdown -->
+                    <div class="dropdown-wrapper">
+                        <button class="icon-btn" id="export-dropdown-btn" title="Export conversation" aria-label="Export conversation">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        </button>
+                        <div class="dropdown-menu hidden" id="export-menu">
+                            <button class="dropdown-item" id="export-markdown-btn">
+                                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                <span>Export as Markdown (.md)</span>
+                            </button>
+                            <button class="dropdown-item" id="export-json-btn">
+                                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+                                <span>Export as JSON</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Delete Current Chat -->
+                    <button class="icon-btn danger-hover" id="delete-current-chat-btn" title="Delete conversation" aria-label="Delete this conversation">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Chat Message Feed -->
+            <div class="chat-messages-container" id="messages-container">
+                <!-- Welcome State (Shown when no messages) -->
+                <div class="welcome-screen" id="welcome-screen">
+                    <div class="welcome-glow-orb"></div>
+                    <div class="welcome-avatar-wrapper">
+                        <div class="welcome-avatar">
+                            <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                                <circle cx="9" cy="12" r="1" fill="currentColor"></circle>
+                                <circle cx="12" cy="12" r="1" fill="currentColor"></circle>
+                                <circle cx="15" cy="12" r="1" fill="currentColor"></circle>
+                            </svg>
+                        </div>
+                    </div>
+                    <h2 class="welcome-title">Welcome to <span class="gradient-text">chitchat</span></h2>
+                    <p class="welcome-subtitle">Ultra-fast AI intelligence powered by Groq. Ask any question, attach documents, drop images, or talk directly using voice.</p>
+
+                    <div class="features-grid">
+                        <div class="feature-card">
+                            <div class="feature-icon">⚡</div>
+                            <div class="feature-info">
+                                <h3>Ultra-Fast Streaming</h3>
+                                <p>Smooth, real-time responses powered by Groq LPU inference</p>
+                            </div>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">📄</div>
+                            <div class="feature-info">
+                                <h3>Document Reasoning</h3>
+                                <p>Upload PDFs, Word docs, code files, CSVs, or text for deep analysis</p>
+                            </div>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">🖼️</div>
+                            <div class="feature-info">
+                                <h3>Multimodal Vision</h3>
+                                <p>Analyze charts, screenshots, diagrams, and photos with vision models</p>
+                            </div>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">🎙️</div>
+                            <div class="feature-info">
+                                <h3>Audio & Speech</h3>
+                                <p>Speak naturally via Groq Whisper with real-time waveform visualization</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="prompt-suggestions">
+                        <span class="suggestions-label">Try asking:</span>
+                        <div class="suggestions-chips">
+                            <button class="chip-btn" data-prompt="Explain the difference between synchronous and asynchronous programming with clear examples.">
+                                💡 Sync vs Async programming
+                            </button>
+                            <button class="chip-btn" data-prompt="Write a clean Python Flask REST API blueprint with validation and error handling.">
+                                💻 Flask REST API design
+                            </button>
+                            <button class="chip-btn" data-prompt="How does Groq's Language Processing Unit (LPU) achieve such ultra-fast inference speed?">
+                                ⚡ How Groq LPUs work
+                            </button>
+                            <button class="chip-btn" data-prompt="Give me a comprehensive checklist for optimizing web application performance and Core Web Vitals.">
+                                🚀 Web Performance checklist
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Messages Stream Container -->
+                <div class="messages-list" id="messages-list"></div>
+            </div>
+
+            <!-- Scroll to bottom button -->
+            <button class="scroll-bottom-btn hidden" id="scroll-bottom-btn" title="Scroll to bottom" aria-label="Scroll to bottom">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+
+            <!-- Attachment Dock (Shows thumbnails of queued files/images before sending) -->
+            <div class="attachments-preview-dock hidden" id="attachments-dock">
+                <div class="dock-header">
+                    <span class="dock-title">Attached Files (<span id="attachment-count">0</span>)</span>
+                    <button class="dock-clear-all" id="clear-attachments-btn">Clear all</button>
+                </div>
+                <div class="dock-items" id="dock-items"></div>
+            </div>
+
+            <!-- Chat Input Dock -->
+            <div class="chat-input-wrapper">
+                <form class="chat-input-form" id="chat-form">
+                    <!-- Action Toolbar Left -->
+                    <div class="input-actions-left">
+                        <!-- File Upload Button -->
+                        <button type="button" class="input-action-btn" id="upload-file-btn" title="Attach documents (PDF, DOCX, TXT, Code, CSV)" aria-label="Upload document">
+                            <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                        </button>
+                        <input type="file" id="file-input" multiple class="hidden" accept=".pdf,.docx,.txt,.py,.js,.jsx,.ts,.tsx,.html,.css,.json,.csv,.md,.sql,.xml,.yaml,.yml">
+
+                        <!-- Image Upload Button -->
+                        <button type="button" class="input-action-btn" id="upload-image-btn" title="Attach images (PNG, JPG, WEBP, GIF)" aria-label="Upload image">
+                            <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                        </button>
+                        <input type="file" id="image-input" multiple class="hidden" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp">
+                    </div>
+
+                    <!-- Textarea -->
+                    <div class="input-field-container">
+                        <textarea 
+                            id="user-input" 
+                            placeholder="Message chitchat... (Press Shift+Enter for newline, Enter to send)" 
+                            rows="1" 
+                            aria-label="Message prompt"></textarea>
+                    </div>
+
+                    <!-- Action Toolbar Right -->
+                    <div class="input-actions-right">
+                        <!-- Audio / Microphone Button -->
+                        <button type="button" class="input-action-btn voice-btn" id="mic-btn" title="Speak via Groq Whisper" aria-label="Audio speech input">
+                            <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                        </button>
+
+                        <!-- Send / Stop Button -->
+                        <button type="submit" class="send-btn" id="send-btn" title="Send message" aria-label="Send message">
+                            <svg class="send-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                            <svg class="stop-icon hidden" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"></rect></svg>
+                        </button>
+                    </div>
+                </form>
+                <div class="input-footer-hint">
+                    <span>chitchat can analyze documents & vision images. Powered by <strong>Groq Cloud</strong>.</span>
+                </div>
+            </div>
+        </main>
+
+        <!-- ================= MODALS & OVERLAYS ================= -->
+
+        <!-- 1. Settings Modal -->
+        <div class="modal-backdrop hidden" id="settings-modal">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <div class="modal-title-group">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                        <h3>chitchat Settings</h3>
+                    </div>
+                    <button class="icon-btn" id="close-settings-btn" title="Close" aria-label="Close modal">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <!-- API Key Section -->
+                    <div class="form-group">
+                        <label for="settings-api-key">Groq API Key</label>
+                        <p class="field-hint">Stored in <code>.env</code> file. Get your free key at <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com</a>.</p>
+                        <div class="input-with-action">
+                            <input type="password" id="settings-api-key" placeholder="gsk_..." autocomplete="off">
+                            <button type="button" class="field-action-btn" id="toggle-key-visibility-btn" title="Show/Hide">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            </button>
+                        </div>
+                        <div class="key-status-row">
+                            <span class="key-status-badge" id="key-status-badge">Checking...</span>
+                        </div>
+                    </div>
+
+                    <!-- Default Model Section -->
+                    <div class="form-group">
+                        <label for="settings-text-model">Default Text Model</label>
+                        <select id="settings-text-model">
+                            <option value="llama-3.3-70b-versatile">Llama 3.3 70B Versatile (Recommended - High reasoning & code)</option>
+                            <option value="llama-3.1-8b-instant">Llama 3.1 8B Instant (Ultra-fast)</option>
+                            <option value="mixtral-8x7b-32768">Mixtral 8x7B (32k context)</option>
+                        </select>
+                    </div>
+
+                    <!-- Vision Model Section -->
+                    <div class="form-group">
+                        <label for="settings-vision-model">Vision Model (Used when images attached)</label>
+                        <select id="settings-vision-model">
+                            <option value="llama-3.2-11b-vision-preview">Llama 3.2 11B Vision (Fast multimodal reasoning)</option>
+                            <option value="llama-3.2-90b-vision-preview">Llama 3.2 90B Vision (Heavy multimodal reasoning)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn-secondary" id="cancel-settings-btn">Cancel</button>
+                    <button class="btn-primary" id="save-settings-btn">Save Settings</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Audio Recording Visualizer Overlay -->
+        <div class="audio-overlay hidden" id="audio-overlay">
+            <div class="audio-card">
+                <div class="audio-pulsing-orb">
+                    <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                </div>
+                <h3 class="audio-status-title" id="audio-status-title">Listening... Speak now</h3>
+                <span class="audio-timer" id="audio-timer">00:00</span>
+
+                <!-- Real-time Canvas Waveform -->
+                <div class="canvas-wrapper">
+                    <canvas id="audio-waveform-canvas" width="340" height="70"></canvas>
+                </div>
+
+                <p class="audio-subtext" id="audio-subtext">Transcribing via Groq Whisper with ultra-high accuracy</p>
+
+                <div class="audio-actions">
+                    <button class="btn-audio-cancel" id="cancel-recording-btn">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        <span>Cancel</span>
+                    </button>
+                    <button class="btn-audio-done" id="finish-recording-btn">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        <span>Done & Transcribe</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notification -->
+        <div class="toast-container" id="toast-container"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/static/js/audio.js"></script>
+    <script src="/static/js/history.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
